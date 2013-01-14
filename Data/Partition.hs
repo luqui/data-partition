@@ -37,7 +37,7 @@ data Partition a
 discrete :: Partition a
 discrete = Partition Map.empty Map.empty
 
--- | Synonym for "discrete".
+-- | Synonym for @discrete@.
 empty :: Partition a
 empty = discrete
 
