@@ -13,7 +13,7 @@
 -- item belongs to and the ability to merge any two such sets into one.
 ---------------------------------------------------------------------------
 
-module Data.Parititon 
+module Data.Partition 
     ( Partition, discrete, empty, join, find )
  where
 
