@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                data-partition
-version:             0.1.0.0
+version:             0.2.0.0
 synopsis:            A pure disjoint set (union find) data structure
 -- description:         
 homepage:            https://github.com/luqui/data-partition
