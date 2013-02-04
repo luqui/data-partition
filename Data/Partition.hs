@@ -58,7 +58,7 @@ nontrivialSets :: Partition a -> [Set.Set a]
 nontrivialSets = Map.elems . backwardMap
 
 -- | @join x y@ merges the two sets containing @x@ and @y@ into a single set.  Semantics:
--- @[[join x y p]] = (p `minus` find x `minus` find y) `union` { find x `union` find y }@
+-- @[[join x y p]] = (p \`minus\` find x \`minus\` find y) \`union\` { find x \`union\` find y }@
 join :: (Ord a) => a -> a -> Partition a -> Partition a
 join x y p = case compare x' y' of
                  LT -> go x' y'
