@@ -48,9 +48,12 @@ empty = discrete
 -- with every remaining element being given its own set.
 fromSets :: (Ord a) => [Set.Set a] -> Partition a
 fromSets sets = Partition { 
-        forwardMap = Map.fromList [ (x, Set.findMin s) | s <- sets, x <- Set.toList s ],
-        backwardMap = Map.fromList [ (Set.findMin s, s) | s <- sets ]
+        forwardMap = Map.fromList [ (x, Set.findMin s) | s <- sets', x <- Set.toList s ],
+        backwardMap = Map.fromList [ (Set.findMin s, s) | s <- sets' ]
     }
+    where
+      sets' = filter (not.isSingleton) sets
+      isSingleton s = 1 == Set.size s
 
 -- | Returns a list of all nontrivial sets (sets with more than one element) in the 
 -- partition.
