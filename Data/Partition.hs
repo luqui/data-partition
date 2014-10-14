@@ -1,3 +1,5 @@
+{-# LANGUAGE PatternGuards        #-}
+
 --------------------------------------------------------------------------
 -- |
 -- Module               : Data.Parition
@@ -14,7 +16,7 @@
 ---------------------------------------------------------------------------
 
 module Data.Partition 
-    ( Partition, discrete, empty, fromDisjointSets, nontrivialSets, joinElems, find, rep )
+    ( Partition, discrete, empty, fromSets, fromDisjointSets, nontrivialSets, joinElems, find, rep )
  where
 
 import qualified Data.Map as Map
@@ -58,13 +60,27 @@ fromDisjointSets sets = Partition {
       sets' = filter (not.isSingleton) sets
       isSingleton s = 1 == Set.size s
 
+-- | Takes a list of (not necessarily disjoint) sets and constructs a partition
+--   that associates all elements shared in /any/ of the sets.
+-- 
+--   /O/ (/n/ /k/ log /n/), where /k/ is the maximum set-size and /n/ = /l/ /k/ is
+--   the total number of non-discrete elements.
+fromSets :: (Ord a) => [Set.Set a] -> Partition a
+fromSets = foldr joins discrete
+ where joins set | (p0:ps) <- Set.toList set
+                    = foldr ((.) . joinElems p0) id ps
+       joins _empty = id
+
 -- | Returns a list of all nontrivial sets (sets with more than one element) in the 
 -- partition.
 nontrivialSets :: Partition a -> [Set.Set a]
 nontrivialSets = Map.elems . backwardMap
 
 -- | @joinElems x y@ merges the two sets containing @x@ and @y@ into a single set.  Semantics:
--- @[[joinElems x y p]] = (p \`minus\` find x \`minus\` find y) \`union\` { find x \`union\` find y }@
+-- @[[joinElems x y p]] = (p \`minus\` find x \`minus\` find y) \`union\` { find x \`union\` find y }@.
+-- 
+-- /O/ (max(/k/ log /n/, /k/ log /k/)), where /k/ is the size of nontrivial subsets
+-- and /n/ is the total number of elements in such sets.
 joinElems :: (Ord a) => a -> a -> Partition a -> Partition a
 joinElems x y p = case compare x' y' of
                  LT -> go x' y'
