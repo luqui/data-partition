@@ -14,7 +14,7 @@
 ---------------------------------------------------------------------------
 
 module Data.Partition 
-    ( Partition, discrete, empty, fromSets, nontrivialSets, join, find, rep )
+    ( Partition, discrete, empty, fromDisjointSets, nontrivialSets, joinElems, find, rep )
  where
 
 import qualified Data.Map as Map
@@ -33,7 +33,7 @@ data Partition a
                         -- sometimes.
 
 instance (Show a) => Show (Partition a) where
-    show p = "fromSets " ++ show (nontrivialSets p)
+    show p = "fromDisjointSets " ++ show (nontrivialSets p)
 
 -- | A partition in which every element of @a@ is in its own set.  Semantics:
 -- @[[discrete]] = { { x } | x in a }@
@@ -45,9 +45,12 @@ empty :: Partition a
 empty = discrete
 
 -- | Takes a list of disjoint sets and constructs a partition containing those sets,
--- with every remaining element being given its own set.
-fromSets :: (Ord a) => [Set.Set a] -> Partition a
-fromSets sets = Partition { 
+-- with every remaining element being given its own set. The precondition is
+-- not checked.
+-- 
+-- /O/ (/n/ log /n/), where /n/ is the total number of elements in the given sets.
+fromDisjointSets :: (Ord a) => [Set.Set a] -> Partition a
+fromDisjointSets sets = Partition { 
         forwardMap = Map.fromList [ (x, Set.findMin s) | s <- sets', x <- Set.toList s ],
         backwardMap = Map.fromList [ (Set.findMin s, s) | s <- sets' ]
     }
@@ -60,10 +63,10 @@ fromSets sets = Partition {
 nontrivialSets :: Partition a -> [Set.Set a]
 nontrivialSets = Map.elems . backwardMap
 
--- | @join x y@ merges the two sets containing @x@ and @y@ into a single set.  Semantics:
--- @[[join x y p]] = (p \`minus\` find x \`minus\` find y) \`union\` { find x \`union\` find y }@
-join :: (Ord a) => a -> a -> Partition a -> Partition a
-join x y p = case compare x' y' of
+-- | @joinElems x y@ merges the two sets containing @x@ and @y@ into a single set.  Semantics:
+-- @[[joinElems x y p]] = (p \`minus\` find x \`minus\` find y) \`union\` { find x \`union\` find y }@
+joinElems :: (Ord a) => a -> a -> Partition a -> Partition a
+joinElems x y p = case compare x' y' of
                  LT -> go x' y'
                  EQ -> p
                  GT -> go y' x'
