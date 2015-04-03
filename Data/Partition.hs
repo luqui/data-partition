@@ -1,3 +1,5 @@
+{-# LANGUAGE PatternGuards        #-}
+
 --------------------------------------------------------------------------
 -- |
 -- Module               : Data.Parition
@@ -14,7 +16,7 @@
 ---------------------------------------------------------------------------
 
 module Data.Partition 
-    ( Partition, discrete, empty, fromSets, nontrivialSets, join, find, rep )
+    ( Partition, discrete, empty, fromSets, fromDisjointSets, nontrivialSets, joinElems, find, rep )
  where
 
 import qualified Data.Map as Map
@@ -33,7 +35,7 @@ data Partition a
                         -- sometimes.
 
 instance (Show a) => Show (Partition a) where
-    show p = "fromSets " ++ show (nontrivialSets p)
+    show p = "fromDisjointSets " ++ show (nontrivialSets p)
 
 -- | A partition in which every element of @a@ is in its own set.  Semantics:
 -- @[[discrete]] = { { x } | x in a }@
@@ -45,9 +47,12 @@ empty :: Partition a
 empty = discrete
 
 -- | Takes a list of disjoint sets and constructs a partition containing those sets,
--- with every remaining element being given its own set.
-fromSets :: (Ord a) => [Set.Set a] -> Partition a
-fromSets sets = Partition { 
+-- with every remaining element being given its own set. The precondition is
+-- not checked.
+-- 
+-- /O/ (/n/ log /n/), where /n/ is the total number of elements in the given sets.
+fromDisjointSets :: (Ord a) => [Set.Set a] -> Partition a
+fromDisjointSets sets = Partition { 
         forwardMap = Map.fromList [ (x, Set.findMin s) | s <- sets', x <- Set.toList s ],
         backwardMap = Map.fromList [ (Set.findMin s, s) | s <- sets' ]
     }
@@ -55,15 +60,29 @@ fromSets sets = Partition {
       sets' = filter (not.isSingleton) sets
       isSingleton s = 1 == Set.size s
 
+-- | Takes a list of (not necessarily disjoint) sets and constructs a partition
+--   that associates all elements shared in /any/ of the sets.
+-- 
+--   /O/ (/n/ /k/ log /n/), where /k/ is the maximum set-size and /n/ = /l/ /k/ is
+--   the total number of non-discrete elements.
+fromSets :: (Ord a) => [Set.Set a] -> Partition a
+fromSets = foldr joins discrete
+ where joins set | (p0:ps) <- Set.toList set
+                    = foldr ((.) . joinElems p0) id ps
+       joins _empty = id
+
 -- | Returns a list of all nontrivial sets (sets with more than one element) in the 
 -- partition.
 nontrivialSets :: Partition a -> [Set.Set a]
 nontrivialSets = Map.elems . backwardMap
 
--- | @join x y@ merges the two sets containing @x@ and @y@ into a single set.  Semantics:
--- @[[join x y p]] = (p \`minus\` find x \`minus\` find y) \`union\` { find x \`union\` find y }@
-join :: (Ord a) => a -> a -> Partition a -> Partition a
-join x y p = case compare x' y' of
+-- | @joinElems x y@ merges the two sets containing @x@ and @y@ into a single set.  Semantics:
+-- @[[joinElems x y p]] = (p \`minus\` find x \`minus\` find y) \`union\` { find x \`union\` find y }@.
+-- 
+-- /O/ (max(/k/ log /n/, /k/ log /k/)), where /k/ is the size of nontrivial subsets
+-- and /n/ is the total number of elements in such sets.
+joinElems :: (Ord a) => a -> a -> Partition a -> Partition a
+joinElems x y p = case compare x' y' of
                  LT -> go x' y'
                  EQ -> p
                  GT -> go y' x'
