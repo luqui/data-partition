@@ -24,6 +24,7 @@ module Data.Partition
     , nontrivialSets
     , nontrivialRepresentatives
     , joinElems
+    , areJoined
     , find
     , rep
     )
@@ -116,6 +117,12 @@ joinElems x y p = case compare x' y' of
                     }
         where
         otherSrc = repFind p other
+
+-- | @areJoined p x y@ returns whether @x@ and @y@ are members of the same partition.
+--
+-- @areJoined p x y = rep p x == rep p y@.
+areJoined :: (Ord a) => Partition a -> a -> a -> Bool
+areJoined p x y = rep p x == rep p y
 
 -- | @find p x@ finds the set that the element @x@ is associated with.  Semantics: 
 -- @[[find p x]] = the unique s in p such that x in s@.
