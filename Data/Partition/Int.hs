@@ -14,7 +14,16 @@
 ---------------------------------------------------------------------------
 
 module Data.Partition.Int
-    ( Partition, discrete, empty, fromSets, nontrivialSets, join, find, rep )
+    ( Partition
+    , discrete
+    , empty
+    , fromSets
+    , nontrivialSets
+    , nontrivialRepresentatives
+    , join
+    , find
+    , rep
+    )
  where
 
 import qualified Data.IntMap as Map
@@ -55,6 +64,13 @@ fromSets sets = Partition {
 -- partition.
 nontrivialSets :: Partition -> [Set.IntSet]
 nontrivialSets = Map.elems . backwardMap
+
+-- | Returns a list of all representatives (least elements) of nontrivial sets in
+-- the partition in ascending order.
+--
+-- @nontrivialRepresentatives p = Set.findMin <$> nonTrivialSets@
+nontrivialRepresentatives :: Partition -> [Int]
+nontrivialRepresentatives = Map.keys . backwardMap
 
 -- | @join x y@ merges the two sets containing @x@ and @y@ into a single set.  Semantics:
 -- @[[join x y p]] = (p \`minus\` find x \`minus\` find y) \`union\` { find x \`union\` find y }@
